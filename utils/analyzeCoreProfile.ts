@@ -1,12 +1,10 @@
 // utils/analyzeCoreProfile.ts
-
 import { iljuProfiles } from "../data/iljuProfiles";
 import { mbtiProfiles, MbtiType } from "../data/mbtiProfiles";
 import { bloodProfiles, BloodType } from "../data/bloodProfiles";
-import type { IljuCode } from "./calcIlju";
 
 export interface CoreAnalysisInput {
-  ilju: IljuCode;
+  ilju: string;
   mbti: string;
   blood: string;
 }
@@ -23,8 +21,8 @@ export interface CoreAnalysisResult {
 export function analyzeCoreProfile(
   input: CoreAnalysisInput
 ): CoreAnalysisResult {
-  const iljuProfile =
-    iljuProfiles[input.ilju] ?? iljuProfiles["병술"]; // fallback
+  const iljuKey = input.ilju || "병술";
+  const iljuProfile = iljuProfiles[iljuKey] ?? iljuProfiles["병술"];
 
   const mbtiKey = (input.mbti.toUpperCase() || "INFJ") as MbtiType;
   const mbtiProfile = mbtiProfiles[mbtiKey] ?? mbtiProfiles["INFJ"];
@@ -40,24 +38,36 @@ export function analyzeCoreProfile(
     `${bloodProfile.code}형`,
   ];
 
-  const overview = [
-    iljuProfile.summary,
-    `${mbtiProfile.code} 유형 특유의 "${mbtiProfile.nickname}" 기질이 더해져, 생각하고 움직이는 방식에서는 MBTI 색이 더 뚜렷하게 드러납니다.`,
-    `여기에 ${bloodProfile.code}형의 "${bloodProfile.nickname}" 분위기가 섞여, 감정을 표현하고 관계를 맺는 방식에 작은 톤을 더해 줍니다.`,
-  ]
-    .join(" ")
-    .trim();
+  const overviewParts: string[] = [];
 
+  // 일주 기반 메인 설명
+  overviewParts.push(iljuProfile.summary);
+
+  // MBTI 기질과의 결합 설명
+  overviewParts.push(
+    `${mbtiProfile.code} 유형의 “${mbtiProfile.nickname}” 기질이 더해지면서, 상황을 바라보고 움직이는 방식에서는 MBTI 특유의 사고 패턴이 보다 또렷하게 드러납니다.`
+  );
+
+  // 혈액형 톤 설명
+  overviewParts.push(
+    `${bloodProfile.code}형의 “${bloodProfile.nickname}” 성향은 감정을 표현하고 관계를 조율하는 과정에서 미묘한 톤을 더해, 주변 사람들이 느끼는 당신의 인상을 결정짓는 데 영향을 줍니다.`
+  );
+
+  const overview = overviewParts.join(" ");
+
+  // 강점: 일주 2 + MBTI 1
   const strengths = [
     ...iljuProfile.strengths.slice(0, 2),
     ...mbtiProfile.strengths.slice(0, 1),
   ];
 
+  // 약점: 일주 2 + MBTI 1
   const weaknesses = [
     ...iljuProfile.weaknesses.slice(0, 2),
     ...mbtiProfile.weaknesses.slice(0, 1),
   ];
 
+  // 팁: 일주 팁 2 + 혈액형 요약/팁
   const tips = [
     ...iljuProfile.tips.slice(0, 2),
     bloodProfile.summary,
